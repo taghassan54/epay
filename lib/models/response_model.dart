@@ -50,7 +50,10 @@ class ResponseModel {
       LoggerHelper.logWarning("list $list");
 
 
-    if(list.length >5 && list[3].endsWith('Processing...001')){
+    if(list.length >5 && list[3].replaceAll("", "")
+        .replaceAll("", '')
+        .replaceAll(" ", '')
+        .trim().endsWith('Processing...001')){
       message =list[6].replaceAll("", "")
           .replaceAll("", '')
           .trim();
