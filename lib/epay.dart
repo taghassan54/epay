@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:epay/logger_helper.dart';
+import 'package:epay/models/response_model.dart';
+import 'package:epay/models/ticket_model.dart';
 import 'package:flutter/foundation.dart';
 
 import 'epay_platform_interface.dart';
@@ -13,7 +16,8 @@ class Epay {
 
   Epay({required this.ip, required this.port, required this.deviceId});
 
-  StreamController? receiveDataFromServerStream = StreamController();
+  StreamController<ResponseModel>? receiveDataFromServerStream =
+      StreamController<ResponseModel>();
 
   Future<String?> getPlatformVersion() {
     return EpayPlatform.instance.getPlatformVersion();
@@ -35,10 +39,11 @@ class Epay {
     send("$deviceId|030|$transaction|0");
   }
 
-  void getDeviceInfo(){
+  void getDeviceInfo() {
     send("003");
   }
- void getTerminalStatus(){
+
+  void getTerminalStatus() {
     send("$deviceId|040|");
   }
 
@@ -47,13 +52,13 @@ class Epay {
       if (socket != null) {
         sendDataOverTCP(socket, data).then((_) {
           if (kDebugMode) {
-            print('Data sent successfully!');
+            LoggerHelper.logInfo('Data sent successfully!');
           }
           receiveDataFromServer(socket);
         });
       } else {
         if (kDebugMode) {
-          print('socket is null ');
+          LoggerHelper.logInfo('socket is null ');
         }
       }
     });
@@ -63,11 +68,11 @@ class Epay {
     try {
       // Replace 'your_server_address' with the actual server IP address or domain.
       final socket =
-          await Socket.connect(ip, port, timeout: const Duration(seconds: 10));
+          await Socket.connect(ip, port, timeout: const Duration(seconds: 15),);
 
       // Perform operations with the socket, e.g., send data, listen for data, etc.
       if (kDebugMode) {
-        print("socket connected");
+        LoggerHelper.logInfo("socket connected");
       }
       // sendDataOverTCP(socket);
       // Close the socket when done.
@@ -76,7 +81,7 @@ class Epay {
       return socket;
     } catch (e) {
       if (kDebugMode) {
-        print('Error while connecting to the server: $e');
+        LoggerHelper.logInfo('Error while connecting to the server: $e');
       }
     }
     return null;
@@ -84,18 +89,17 @@ class Epay {
 
   Future<void> sendDataOverTCP(Socket socket, String data) async {
     try {
-
       final dataToSend = utf8.encode(data);
 
       var isSent = await sendBytes(dataToSend, socket);
       if (kDebugMode) {
-        print("isSent $isSent");
+        LoggerHelper.logInfo("isSent $isSent");
       }
       socket.close();
     } catch (e) {
       socket.close();
       if (kDebugMode) {
-        print('Error while sending data: $e');
+        LoggerHelper.logInfo('Error while sending data: $e');
       }
     }
   }
@@ -108,17 +112,17 @@ class Epay {
     array[data.length + 2] = 10;
 
     if (kDebugMode) {
-      print("Sending ${array.length}: $array");
+      LoggerHelper.logInfo("Sending ${array.length}: $array");
     }
 
     try {
       // Send data
       socket.add(array);
       if (kDebugMode) {
-        print("socket address : ${socket.address}");
+        LoggerHelper.logInfo("socket address : ${socket.address}");
       }
       if (kDebugMode) {
-        print("socket port : ${socket.port}");
+        LoggerHelper.logInfo("socket port : ${socket.port}");
       }
       socket.write("003");
       // Close the socket after sending
@@ -127,7 +131,7 @@ class Epay {
       return true;
     } catch (e) {
       if (kDebugMode) {
-        print("Error sending data: $e");
+        LoggerHelper.logInfo("Error sending data: $e");
       }
       return false;
     }
@@ -137,33 +141,66 @@ class Epay {
     socket.listen(
       (List<int> data) {
         final receivedData = utf8.decode(data);
-        print('Received data from server: $receivedData');
+        LoggerHelper.logInfo('Received data from server: $receivedData');
 
-        receiveDataFromServerStream?.add(receivedData);
+        List<String> result = receivedData.toString().split("|");
+
+        ResponseModel responseModel = ResponseModel.fromList(result);
+
+        switch (responseModel.status) {
+          case "047":
+            if(responseModel.ticket!=null&&responseModel.ticket?.transactionId!=null&&responseModel.message=='0') {
+              confirmTicket(transaction: "${responseModel.ticket?.transactionId}");
+            }
+            LoggerHelper.logInfo("crruncy ${responseModel.ticket?.currency}");
+            break;
+          case "001":
+            LoggerHelper.logInfo(
+                "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            break;
+          case "002":
+            LoggerHelper.logInfo(
+                "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            break;
+          case "040":
+            break;
+          case "062":
+            break;
+          case "010":
+            getLastTicket();
+            break;
+          case "030":
+            getLastTicket();
+            break;
+
+        }
+
+        receiveDataFromServerStream?.add(responseModel);
       },
       onError: (error) {
         if (error is SocketException && error.osError?.errorCode == 32) {
           // Handle Broken Pipe error here.
           if (kDebugMode) {
-            print('Broken pipe error: The server closed the connection.');
+            LoggerHelper.logInfo(
+                'Broken pipe error: The server closed the connection.');
           }
         } else if (error is SocketException &&
             error.osError?.errorCode == 104) {
           // Handle Connection reset by peer error here.
           if (kDebugMode) {
-            print(
-              'Connection reset by peer: The server forcibly closed the connection.');
+            LoggerHelper.logInfo(
+                'Connection reset by peer: The server forcibly closed the connection.');
           }
         } else {
           // Handle other socket errors here.
           if (kDebugMode) {
-            print('Error while receiving data: $error');
+            LoggerHelper.logInfo('Error while receiving data: $error');
           }
         }
         socket.close();
       },
       onDone: () {
-        print('Connection closed by server.');
+        LoggerHelper.logInfo('Connection closed by server.');
         socket.close();
       },
     );

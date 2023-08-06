@@ -16,7 +16,7 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('getPlatformVersion test', (WidgetTester tester) async {
-    final Epay plugin = Epay(ip: '172.16.0.92',port: 6666);
+    final Epay plugin = Epay(ip: '172.16.0.92',port: 6666, deviceId: '');
     final String? version = await plugin.getPlatformVersion();
     // The version string depends on the host platform running the test, so
     // just assert that some non-empty string is returned.

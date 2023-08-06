@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:epay/logger_helper.dart';
+import 'package:epay/models/response_model.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -20,80 +22,50 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
-  final _epayPlugin = Epay(deviceId: 'EKIOSK01',ip: '172.16.0.239', port: 6666);
+  final _epayPlugin =
+      Epay(deviceId: 'EKIOSK01', ip: '172.16.0.239', port: 6666);
   List<String> messages = [];
 
   String? transaction;
   String? transactionStatus;
-  String? title='ECR Demo';
+  String? title = 'ECR Demo';
+  ResponseModel? response;
 
   @override
   void initState() {
     super.initState();
     initPlatformState();
-    _epayPlugin.receiveDataFromServerStream?.stream.listen((event) {
+    _epayPlugin.receiveDataFromServerStream?.stream
+        .listen((ResponseModel event) {
       // messages.add("$event");
 
       setState(() {
+        response = event;
         messages.add("");
-        messages.add("$event");
+        messages.add("#####################################");
+        messages.add("status : ${event.status}");
+        messages.add("#####################################");
+        messages.add("message : ${event.message}");
+        messages.add("#####################################");
+        messages.add("indicator : ${event.indicator}");
+        messages.add("#####################################");
+        messages.add("deviceID : ${event.deviceID}");
+
+        if (event.ticket != null) {
+          messages.add("#####################################");
+          messages.add("ticket status : ${event.ticket?.status}");
+          messages.add("ticket currency : ${event.ticket?.currency}");
+          messages.add("ticket amount : ${event.ticket?.amount}");
+          messages.add("ticket code : ${event.ticket?.code}");
+          messages
+              .add("ticket transaction Id : ${event.ticket?.transactionId}");
+          messages.add(
+              "ticket card : ${event.ticket?.card} / ${event.ticket?.cardType}");
+        }
         messages.add("#####################################");
         messages.add("");
       });
-
-      List<String> result = event.toString().split("|");
-//
-      print("result[0] ${result[0].replaceAll('', '')}");
-      if (result[0].replaceAll('', '') == "047") {
-        List<int> decodedBytes = base64.decode(result[2]);
-
-        setState(() {
-          messages.add(result[0]);
-          messages.add(result[1]);
-          messages.add(result[3]);
-          messages.add("******************************");
-        });
-        String decodedString = utf8.decode(decodedBytes);
-        List<String> decodedStrings = decodedString.split("|");
-        decodedStrings.forEach((element) {
-          if (element.isNotEmpty) {
-            setState(() {
-              messages.add(element);
-            });
-          }
-        });
-
-        if (kDebugMode) {
-          print("$decodedStrings");
-          print("transaction Id : ${decodedStrings[7]}");
-          print("transaction Status : ${result[3]}");
-        }
-
-        setState(() {
-          transaction = decodedStrings[7]
-              .replaceAll("", "")
-              .replaceAll("", '')
-              .replaceAll(" ", "")
-              .trim();
-          transactionStatus = result[3]
-              .replaceAll("", "")
-              .replaceAll("", "")
-              .replaceAll(" ", "")
-              .trim();
-        });
-      }
-
-      if (result[0].replaceAll('', '') == "001"||result[0].replaceAll('', '') == "002") {
-
-        setState(() {
-          title=result[3].replaceAll("", "")
-              .replaceAll("", '')
-              .replaceAll(" ", "")
-              .trim();
-        });
-
-      }
-
+      return;
     });
   }
 
@@ -122,25 +94,31 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          title:  Text(
-              '$title'),
+          title: Text('$title'),
           actions: [
-            if (transaction != null && transactionStatus == '0') ...[
+            if (response?.ticket != null && response?.message == '0') ...[
               ElevatedButton(
                   onPressed: () {
-                    _epayPlugin.confirmTicket(transaction: transaction);
+                    _epayPlugin.confirmTicket(
+                        transaction: response?.ticket?.transactionId);
                   },
-                  child: Text("Confirm $transaction")),
+                  child: Text("Confirm ${response?.ticket?.transactionId}")),
               ElevatedButton(
                   onPressed: () {
-                    _epayPlugin.rejectTicket(transaction: transaction);
+                    _epayPlugin.rejectTicket(
+                        transaction: response?.ticket?.transactionId);
                   },
-                  child: Text("Reject $transaction"))
+                  child: Text("Reject ${response?.ticket?.transactionId}"))
             ],
-            if (transactionStatus == '1') const Text("Confirmed",textAlign: TextAlign.center,style: TextStyle(fontSize: 22
-            )),
+            if (response?.ticket != null && response?.message == '1')
+              const Text("Confirmed",
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 22)),
+            if (response?.ticket != null && response?.message == '2')
+              const Text("Rejected",
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 22)),
           ],
         ),
         floatingActionButton: Row(
@@ -152,21 +130,27 @@ class _MyAppState extends State<MyApp> {
               },
               child: const Icon(Icons.money),
             ),
-            const SizedBox(width: 5.0,),
+            const SizedBox(
+              width: 5.0,
+            ),
             FloatingActionButton(
               onPressed: () {
                 _epayPlugin.getLastTicket();
               },
               child: const Icon(Icons.account_balance_sharp),
             ),
-            const SizedBox(width: 5.0,),
+            const SizedBox(
+              width: 5.0,
+            ),
             FloatingActionButton(
               onPressed: () {
                 _epayPlugin.getDeviceInfo();
               },
               child: const Icon(Icons.check_circle_outline),
             ),
-            const SizedBox(width: 5.0,),
+            const SizedBox(
+              width: 5.0,
+            ),
             FloatingActionButton(
               onPressed: () {
                 _epayPlugin.getTerminalStatus();
