@@ -152,15 +152,15 @@ class Epay {
             if(responseModel.ticket!=null&&responseModel.ticket?.transactionId!=null&&responseModel.message=='0') {
               confirmTicket(transaction: "${responseModel.ticket?.transactionId}");
             }
-            LoggerHelper.logInfo("crruncy ${responseModel.ticket?.currency}");
+            // LoggerHelper.logInfo("crruncy ${responseModel.ticket?.currency}");
             break;
           case "001":
-            LoggerHelper.logInfo(
-                "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            // LoggerHelper.logInfo(
+            //     "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
             break;
           case "002":
-            LoggerHelper.logInfo(
-                "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            // LoggerHelper.logInfo(
+            //     "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
             break;
           case "040":
             break;

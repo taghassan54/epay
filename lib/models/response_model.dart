@@ -47,7 +47,7 @@ class ResponseModel {
     }
 
 
-      LoggerHelper.logWarning("list $list");
+      // LoggerHelper.logWarning("list $list");
 
 
     if(list.length >5 && list[3].replaceAll("", "")

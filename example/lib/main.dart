@@ -8,7 +8,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:epay/epay.dart';
-
+const ip ='172.16.0.199';
 void main() {
   runApp(const MyApp());
 }
@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _epayPlugin =
-      Epay(deviceId: 'EKIOSK01', ip: '172.16.0.239', port: 6666);
+      Epay(deviceId: 'EKIOSK01', ip: ip, port: 6666);
   List<String> messages = [];
 
   String? transaction;
@@ -97,7 +97,7 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         appBar: AppBar(
-          title: Text('$title'),
+          title: Text('$title \n$ip:6666 '),
           actions: [
             if (response?.ticket != null && response?.message == '0') ...[
               ElevatedButton(
