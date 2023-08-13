@@ -146,21 +146,25 @@ class Epay {
         List<String> result = receivedData.toString().split("|");
 
         ResponseModel responseModel = ResponseModel.fromList(result);
-
+        LoggerHelper.logInfo("status : ${responseModel.status}");
         switch (responseModel.status) {
           case "047":
             if(responseModel.ticket!=null&&responseModel.ticket?.transactionId!=null&&responseModel.message=='0') {
               confirmTicket(transaction: "${responseModel.ticket?.transactionId}");
+            }else{
+
             }
             // LoggerHelper.logInfo("crruncy ${responseModel.ticket?.currency}");
             break;
           case "001":
             // LoggerHelper.logInfo(
             //     "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            getLastTicket();
             break;
           case "002":
             // LoggerHelper.logInfo(
             //     "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            getLastTicket();
             break;
           case "040":
             break;
