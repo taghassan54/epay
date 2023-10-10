@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:epay/enum/epay_status_enum.dart';
 import 'package:epay/logger_helper.dart';
 import 'package:epay/models/response_model.dart';
 import 'package:epay/models/ticket_model.dart';
@@ -159,21 +160,33 @@ class Epay {
           case "001":
             // LoggerHelper.logInfo(
             //     "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            if (responseModel.indicator.contains('17')) {
+              responseModel.paymentStatus = EPayStatusEnum.processing;
+            }
             getLastTicket();
             break;
           case "002":
             // LoggerHelper.logInfo(
             //     "indicator : ${responseModel.indicator} | message : ${responseModel.message}");
+            if (responseModel.indicator.contains('2002')) {
+              responseModel.paymentStatus = EPayStatusEnum.timeout;
+            }
+            if (responseModel.indicator.contains('2003')) {
+              responseModel.paymentStatus = EPayStatusEnum.canceled;
+            }
             getLastTicket();
             break;
           case "040":
             break;
           case "062":
+            responseModel.paymentStatus = EPayStatusEnum.sale;
             break;
           case "010":
+            responseModel.paymentStatus = EPayStatusEnum.approved;
             getLastTicket();
             break;
           case "030":
+            responseModel.paymentStatus = EPayStatusEnum.confirmed;
             getLastTicket();
             break;
 

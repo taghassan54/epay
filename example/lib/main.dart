@@ -1,12 +1,10 @@
 import 'dart:convert';
-
 import 'package:epay/models/response_model.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
-
 import 'package:flutter/services.dart';
 import 'package:epay/epay.dart';
-const ip ='172.16.0.20';
+const ip ='192.168.0.138';
 void main() {
   runApp(const MyApp());
 }
