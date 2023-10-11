@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:epay/enum/epay_status_enum.dart';
 import 'package:epay/logger_helper.dart';
 import 'package:epay/models/response_model.dart';
-import 'package:epay/models/ticket_model.dart';
 import 'package:flutter/foundation.dart';
 
 import 'epay_platform_interface.dart';
@@ -14,8 +12,14 @@ class Epay {
   final String ip;
   final String deviceId;
   final int port;
+  final Function(bool) connectionCallback;
 
-  Epay({required this.ip, required this.port, required this.deviceId});
+  Epay({
+    required this.ip,
+    required this.port,
+    required this.deviceId,
+    required this.connectionCallback,
+  });
 
   StreamController<ResponseModel>? receiveDataFromServerStream =
       StreamController<ResponseModel>();
@@ -68,8 +72,11 @@ class Epay {
   Future<Socket?> connectToTCPServer() async {
     try {
       // Replace 'your_server_address' with the actual server IP address or domain.
-      final socket =
-          await Socket.connect(ip, port, timeout: const Duration(seconds: 15),);
+      final socket = await Socket.connect(
+        ip,
+        port,
+        timeout: const Duration(seconds: 15),
+      );
 
       // Perform operations with the socket, e.g., send data, listen for data, etc.
       if (kDebugMode) {
@@ -141,6 +148,7 @@ class Epay {
   void receiveDataFromServer(Socket socket) {
     socket.listen(
       (List<int> data) {
+        _isSocketConnected = true;
         final receivedData = utf8.decode(data);
         LoggerHelper.logInfo('Received data from server: $receivedData');
 
@@ -150,11 +158,12 @@ class Epay {
         LoggerHelper.logInfo("status : ${responseModel.status}");
         switch (responseModel.status) {
           case "047":
-            if(responseModel.ticket!=null&&responseModel.ticket?.transactionId!=null&&responseModel.message=='0') {
-              confirmTicket(transaction: "${responseModel.ticket?.transactionId}");
-            }else{
-
-            }
+            if (responseModel.ticket != null &&
+                responseModel.ticket?.transactionId != null &&
+                responseModel.message == '0') {
+              confirmTicket(
+                  transaction: "${responseModel.ticket?.transactionId}");
+            } else {}
             // LoggerHelper.logInfo("crruncy ${responseModel.ticket?.currency}");
             break;
           case "001":
@@ -189,9 +198,8 @@ class Epay {
             responseModel.paymentStatus = EPayStatusEnum.confirmed;
             getLastTicket();
             break;
-
         }
-
+        LoggerHelper.logInfo(responseModel.paymentStatus.name);
         receiveDataFromServerStream?.add(responseModel);
       },
       onError: (error) {
@@ -219,7 +227,13 @@ class Epay {
       onDone: () {
         LoggerHelper.logInfo('Connection closed by server.');
         socket.close();
+        _isSocketConnected = false;
+        connectionCallback(_isSocketConnected);
       },
     );
   }
+
+  bool _isSocketConnected = false;
+
+  bool get isSocketConnected => _isSocketConnected;
 }

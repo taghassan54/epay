@@ -20,7 +20,7 @@ void main() {
   });
 
   test('getPlatformVersion', () async {
-    Epay epayPlugin = Epay(ip: '172.16.0.92',port: 6666, deviceId: 'EKIOSK01');
+    Epay epayPlugin = Epay(ip: '172.16.0.92',port: 6666, deviceId: 'EKIOSK01', connectionCallback: (c) {});
     MockEpayPlatform fakePlatform = MockEpayPlatform();
     EpayPlatform.instance = fakePlatform;
 

@@ -19,7 +19,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _epayPlugin =
-      Epay(deviceId: 'EKIOSK01', ip: ip, port: 6666);
+      Epay(deviceId: 'EKIOSK01', ip: ip, port: 6666, connectionCallback: (c) {});
   List<String> messages = [];
 
   String? transaction;
