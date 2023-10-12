@@ -227,7 +227,6 @@ class Epay {
       onDone: () {
         LoggerHelper.logInfo('Connection closed by server.');
         socket.close();
-        connectToTCPServer();
         _isSocketConnected = false;
         connectionCallback(_isSocketConnected);
       },
