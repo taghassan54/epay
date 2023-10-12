@@ -75,7 +75,7 @@ class Epay {
       final socket = await Socket.connect(
         ip,
         port,
-        timeout: const Duration(seconds: 15),
+        timeout: const Duration(seconds: 60),
       );
 
       // Perform operations with the socket, e.g., send data, listen for data, etc.
@@ -155,7 +155,7 @@ class Epay {
         List<String> result = receivedData.toString().split("|");
 
         ResponseModel responseModel = ResponseModel.fromList(result);
-        LoggerHelper.logInfo("status : ${responseModel.status}");
+        LoggerHelper.logInfo("status : ${responseModel.status} indicator: ${responseModel.indicator}");
         switch (responseModel.status) {
           case "047":
             if (responseModel.ticket != null &&
@@ -227,6 +227,7 @@ class Epay {
       onDone: () {
         LoggerHelper.logInfo('Connection closed by server.');
         socket.close();
+        connectToTCPServer();
         _isSocketConnected = false;
         connectionCallback(_isSocketConnected);
       },

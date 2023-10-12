@@ -1,7 +1,5 @@
 import 'dart:convert';
-
 import 'package:epay/enum/epay_status_enum.dart';
-import 'package:epay/logger_helper.dart';
 import 'package:epay/models/ticket_model.dart';
 
 class ResponseModel {
@@ -31,7 +29,7 @@ class ResponseModel {
         .replaceAll("", '')
         .replaceAll(" ", "")
         .trim();
-    var indicator = list[2]
+    var indicator = list[list.length == 12 ? 5 : 2]
         .replaceAll("", "")
         .replaceAll("", '')
         .replaceAll(" ", "")
